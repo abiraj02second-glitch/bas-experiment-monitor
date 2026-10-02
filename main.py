@@ -27,7 +27,10 @@ hms = lambda: dt.datetime.now().strftime("%H:%M:%S")
 # ---- Agent 1: perception (objects + hands) ----
 class PerceptionAgent:
     def __init__(s):
-        s.yolo = s.hands = s.mode = None
+        s.yolo = s.hands = s.mode = None; s.ready = False; s.loading = True
+        threading.Thread(target=s._load, name="bas-perception-loader", daemon=True).start()
+
+    def _load(s):
         try:
             from ultralytics import YOLO; s.yolo = YOLO(MODEL_PATH)
         except Exception as e: print("YOLO OFF:", e)
@@ -41,8 +44,10 @@ class PerceptionAgent:
                     base_options=mpt.BaseOptions(model_asset_path="hand_landmarker.task"), num_hands=2)); s.mode = "tasks"
             print("Hands ON:", s.mode)
         except Exception as e: print("Hands OFF (objects only):", e)
+        s.loading = False; s.ready = True
     def run(s, frame):
         objs, hands = [], []; h, w = frame.shape[:2]
+        if not s.ready: return objs, hands
         if s.yolo:
             r = s.yolo(frame, imgsz=IMGSZ, conf=CONF, verbose=False)[0]
             for b in r.boxes: objs.append((r.names[int(b.cls)], *map(int, b.xyxy[0]), float(b.conf)))
