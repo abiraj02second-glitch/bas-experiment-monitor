@@ -50,6 +50,8 @@ docker compose down
 
 The project includes a production `Dockerfile` configured for managed container hosting. It listens on `PORT`, defaulting to `3000`, serves the dashboard and API from one FastAPI process, and exposes `/health` as an unauthenticated readiness endpoint. The hosted dashboard uses root-relative API paths and does not depend on `localhost`.
 
+The hosted image intentionally uses `requirements-hosted.txt`, a lightweight runtime set. This keeps the public dashboard, simulation controls, event feed, voice agent, and video placeholder responsive during deployment. Full YOLO and MediaPipe packages remain in `requirements.txt` for local camera/model analysis; the backend loads them optionally in the background when they are installed.
+
 Camera behavior depends on where the backend runs. A local Windows process can access the local webcam when permissions are granted. A hosted container normally cannot access a visitor's physical webcam directly; use browser-side camera capabilities or upload a video for hosted analysis. Container filesystem files such as logs, uploads, and recordings are runtime data and should not be treated as permanent storage.
 
 ## Dashboard capabilities

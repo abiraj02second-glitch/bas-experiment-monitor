@@ -18,8 +18,8 @@ RUN apt-get update \
         libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
-RUN pip install --upgrade pip && pip install -r requirements.txt
+COPY requirements-hosted.txt ./
+RUN pip install --upgrade pip && pip install -r requirements-hosted.txt
 
 COPY . .
 
