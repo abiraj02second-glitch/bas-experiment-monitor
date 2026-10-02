@@ -1,124 +1,149 @@
-# BAS AI Experiment Monitor — single package
-One backend (FastAPI + AI agents) serves your dashboard. One command, one address.
+# BAS AI Experiment Monitor
 
-## Run
-Windows: double-click **run.bat** (first run creates the venv and installs; then opens http://localhost:8000)
-Manual:  `venv\Scripts\activate` -> `uvicorn main:app --host 0.0.0.0 --port 8000` -> open http://localhost:8000
-Other PCs on the network: http://<this-PC-IP>:8000   (raw video: http://<this-PC-IP>:8000/video)
+BAS is a browser dashboard and FastAPI backend for monitoring ordered experiment steps with computer vision, hand tracking, live alerts, logging, video upload, and automatic voice notifications.
 
-## Automatic voice alerts
+- **Public source repository:** https://github.com/abiraj02second-glitch/bas-ai-experiment-monitor
+- **Backend:** Python, FastAPI, OpenCV, YOLO, MediaPipe, and `VoiceSoundAgent`
+- **Frontend:** bundled dashboard in `static/index.html`
+- **Local default URL:** http://127.0.0.1:8000
+- **Hosted container default port:** `3000` through the `PORT` environment variable
 
-- Keep **Voice alert ON** in the dashboard.
-- The first live notification is now spoken automatically, followed by every
-  later notification. You do not need to press the Voice button.
-- The browser automatically speaks start, next-step, skipped-step, warning,
-  error, pause, reset, camera, upload, streaming and completion messages.
-- **Skip Step** now skips the current expected step. This works for every
-  step, including Step 3 and the final Step 6.
-- If several events arrive together, the browser reads them in order instead
-  of dropping the skipped-step warning.
+## Run locally on Windows
 
-### Fully unattended voice mode
-
-Normal browsers may block sound until a person clicks once. For a hands-free
-control-room or spacecraft display, double-click **run-unattended.bat**. It:
-
-1. starts Docker Desktop and waits for its engine;
-2. starts this BAS container and waits for the API; and
-3. opens Chrome or Edge in kiosk mode with automatic audio enabled.
-
-After testing it, double-click **install-unattended-startup.bat** once if the
-monitor must start automatically whenever Windows starts. No dashboard button
-is then required for the first or later voice alerts.
-
-## Run with Docker Desktop
-
-Open PowerShell in this `final` folder and run:
+PowerShell often opens in `C:\Windows\System32`. The project commands must be run from the folder where this repository was extracted.
 
 ```powershell
+cd C:\path\to\bas-ai-experiment-monitor
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Open **http://127.0.0.1:8000** after Uvicorn reports that it is running. If PowerShell blocks activation, run the installation and server commands without activation:
+
+```powershell
+cd C:\path\to\bas-ai-experiment-monitor
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+You can also double-click `run.bat`; it creates the virtual environment, installs dependencies, and starts the dashboard.
+
+## Local Docker Compose
+
+Docker is optional. It is not required for the normal Windows setup.
+
+```powershell
+cd C:\path\to\bas-ai-experiment-monitor
 docker compose up --build -d
 docker compose ps
 ```
 
-Open the complete website at **http://localhost:8000**. The frontend is already
-included in `static/index.html`, so do not run `npm run dev` for this package.
-
-View logs:
-
-```powershell
-docker compose logs -f bas-monitor
-```
-
-Stop the application:
+The Compose configuration maps host port `8000` to the container port `3000`. Open **http://127.0.0.1:8000**. Stop it with:
 
 ```powershell
 docker compose down
 ```
 
-Docker Desktop runs the site on this computer and local network; it does not
-create a public Internet URL. Also note that Docker Desktop's Linux container
-may not have direct access to the Windows webcam. The dashboard and upload mode
-still work, but for direct Windows webcam access run Uvicorn outside Docker.
+## Managed hosting
 
-## What is live in the dashboard
-Start / Pause / Reset, step tracking, next-step prompts, skipped + wrong-step alerts (spoken by the backend, offline),
-timestamped log (Logs page + CSV export, and experiment_log.json on disk), live video with detection boxes,
-Start/Stop Camera, Upload Video (analysed in real time), settings (voice, recording, threshold, camera, resolution, fps),
-Stream page (pushes UDP/JPEG to any IP:port; view it with `python receiver.py 5000` on that PC), Model page (real metrics).
-If the backend is not running the dashboard falls back to its built-in demo.
+The project includes a production `Dockerfile` configured for managed container hosting. It listens on `PORT`, defaulting to `3000`, serves the dashboard and API from one FastAPI process, and exposes `/health` as an unauthenticated readiness endpoint. The hosted dashboard uses root-relative API paths and does not depend on `localhost`.
 
-## Quick Start mode (no training needed)
-If there is no trained model (best.pt), the backend switches to Quick Start automatically: it uses the standard YOLO model
-(downloaded once on first run, works offline after that) and steps_quickstart.json — everyday objects:
-bottle, cup, scissors, cell phone, book, bowl. Hold each object up to the camera in order (move it a little) and watch the
-dashboard track the steps, raise skipped / wrong-step alerts and speak. When best.pt exists, your lab steps.json is used instead.
-Force a mode with  STEPS=steps.json  or  STEPS=steps_quickstart.json.
+Camera behavior depends on where the backend runs. A local Windows process can access the local webcam when permissions are granted. A hosted container normally cannot access a visitor's physical webcam directly; use browser-side camera capabilities or upload a video for hosted analysis. Container filesystem files such as logs, uploads, and recordings are runtime data and should not be treated as permanent storage.
 
-## Your experiment
-Edit steps.json: names, spoken text, and the rules per step —
- objects   what the hand must touch          hold      frames it must be held
- min_move  minimum travel (fraction of frame) inside/outside  object must be inside / outside another detected object
-Labels used: container, lid, pipette, sample_vial, payload_rack.
+## Dashboard capabilities
 
-## Train the model  (training/ folder, in the venv)
-1 python record_video.py   2 label in CVAT (YOLO 1.1, save images)   3 python cvat_import.py export.zip
-4 python check_dataset.py  5 python split_dataset.py                 6 python train.py   7 python evaluate.py
-train.py copies best.pt next to main.py; evaluate.py writes model_metrics.json for the Model page.
-Optional hand tracking (newer mediapipe): download hand_landmarker.task into this folder:
- https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
-Env options: MODEL=best.pt  VIDEO=clip.mp4  CAM=0  CONF=0.25  IMGSZ=640
+The dashboard provides experiment start, pause, reset, ordered step validation, next-step prompts, skipped-step and wrong-step alerts, live detection overlays, camera controls, uploaded-video analysis, timestamped activity logs, CSV export, model metrics, recording controls, resolution/FPS settings, and UDP/JPEG stream controls.
 
-## Backend voice and operations API
+If no trained `best.pt` model is present, the backend enters Quick Start mode and uses the standard YOLO model with `steps_quickstart.json`. The demo controls can inject successful, skipped, and incorrect events so the dashboard and voice workflow can be tested without a camera.
 
-The backend now includes a dedicated `VoiceSoundAgent` worker. It keeps speech synthesis
-off the camera/API threads, uses a bounded priority queue so urgent warnings win, removes
-duplicate announcements, and exposes runtime health and queue metrics in `/state.voice`.
-Every event in `/state.events` includes a `voice` message, so browser speech and native
-offline TTS use the same notification source.
+## Automatic voice notifications
 
-- `GET /health` — Docker/kiosk readiness and voice backend status.
-- `GET /events?after=<id>` — incremental event feed for external displays or agents.
-- `POST /voice/test` with optional `{"text":"..."}` — verify speech output.
-- `POST /voice/clear` — clear queued speech.
-- `POST /settings` — supports `voice`, `voice_volume` (0–1), `voice_rate` (80–300),
-  and `voice_name`, in addition to the existing camera/recording settings.
+Voice output is handled in two layers:
 
-The dashboard includes a live Voice agent indicator. If the browser blocks speech before
-the first user interaction, use kiosk mode (`run-unattended.bat`) or press Start once;
-the backend still logs and exposes every spoken notification.
+1. The browser reads backend event messages through `speechSynthesis`, which is the audible voice output for a user's browser/device.
+2. The backend `VoiceSoundAgent` uses offline `pyttsx3` speech when a server audio runtime is available.
 
-## Managed permanent website
+The voice agent uses a bounded priority queue, prioritizes warnings and errors, suppresses rapid duplicates, and reports queue and error metrics in `/state.voice`. Every backend event includes a visible `text` value and a spoken `voice` value. Browser audio policies may require the user to click Start once; kiosk mode can be used for unattended browser operation.
 
-This project is configured for Manus-managed container hosting. The application listens on
-the managed `PORT` (default `3000`), serves the dashboard and API from one FastAPI process,
-and exposes `/health` for readiness. The published dashboard uses the same root-relative API
-paths as local mode, so it does not depend on `localhost` or a Windows-specific address.
+## Backend API
 
-For a local Windows run, open PowerShell in the extracted project folder first, not in
-`C:\Windows\System32`:
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/` | Dashboard HTML |
+| `GET` | `/health` | Readiness and voice-agent status |
+| `GET` | `/state` | Current experiment, events, log, stream, and voice state |
+| `GET` | `/events?after=<id>` | Incremental event feed |
+| `GET` | `/video` | MJPEG live video stream |
+| `GET` | `/model` | Model metrics or fallback metrics |
+| `GET` | `/log.json` | Experiment log JSON |
+| `POST` | `/control/start` | Start or resume the experiment |
+| `POST` | `/control/pause` | Pause the experiment |
+| `POST` | `/control/reset` | Reset experiment state |
+| `POST` | `/simulate/wrong` | Inject an incorrect-sequence warning |
+| `POST` | `/simulate/skip` | Skip the current expected step |
+| `POST` | `/voice/test` | Queue a voice test; accepts optional `{"text":"..."}` |
+| `POST` | `/voice/clear` | Clear queued speech |
+| `POST` | `/settings` | Update voice, camera, recording, threshold, and stream settings |
+| `POST` | `/source/upload` | Upload a video for analysis |
+| `POST` | `/stream/start` | Start UDP/JPEG streaming |
+| `POST` | `/stream/stop` | Stop UDP/JPEG streaming |
+
+Example health check:
 
 ```powershell
-cd C:\path\to\bas_project
-python -m pip install -r requirements.txt
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+Example voice test:
+
+```powershell
+Invoke-RestMethod -Method Post `
+  -Uri http://127.0.0.1:8000/voice/test `
+  -ContentType 'application/json' `
+  -Body '{"text":"Voice output is working."}'
+```
+
+## Configure an experiment
+
+Edit `steps.json` to define laboratory steps. Each step can specify its display name, spoken text, expected objects, hold-frame count, minimum movement, and inside/outside spatial rules. The current Quick Start objects are bottle, cup, scissors, cell phone, book, and bowl.
+
+Typical trained-model labels are `container`, `lid`, `pipette`, `sample_vial`, and `payload_rack`. Set the trained model and steps file with environment variables:
+
+```powershell
+$env:MODEL = 'best.pt'
+$env:STEPS = 'steps.json'
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+
+Other supported variables include `VIDEO`, `CAM`, `CONF`, and `IMGSZ`.
+
+## Train a model
+
+The `training` directory contains scripts for recording footage, importing CVAT YOLO labels, checking data, splitting datasets, training, and evaluation:
+
+```powershell
+cd training
+python record_video.py
+python cvat_import.py export.zip
+python check_dataset.py
+python split_dataset.py
+python train.py
+python evaluate.py
+```
+
+Training copies `best.pt` beside `main.py`; evaluation writes `model_metrics.json`. Optional newer MediaPipe hand tracking requires `hand_landmarker.task` beside `main.py`.
+
+## Unattended voice mode
+
+`run-unattended.bat` is intended for Windows control-room use. It starts Docker Desktop, starts the Compose service, waits for `/state`, and opens Chrome or Edge in kiosk mode with automatic audio enabled. Use `install-unattended-startup.bat` only after testing if the monitor should start with Windows.
+
+## Repository development
+
+```bash
+git clone https://github.com/abiraj02second-glitch/bas-ai-experiment-monitor.git
+cd bas-ai-experiment-monitor
+```
+
+Do not commit `best.pt`, `yolo*.pt`, `hand_landmarker.task`, runtime logs, recordings, uploads, or Python caches. These are excluded by `.gitignore`.
