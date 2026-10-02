@@ -1,0 +1,11 @@
+{
+ "name": "Quick Start (standard objects)",
+ "steps": [
+  {"id":1,"name":"Pick up the bottle","activity":"Picking up bottle","done":"Picked up bottle","objects":["bottle"],"hold":8,"min_move":0.03,"speak":"Pick up the bottle and move it."},
+  {"id":2,"name":"Pick up the cup","activity":"Picking up cup","done":"Picked up cup","objects":["cup"],"hold":8,"min_move":0.03,"speak":"Pick up the cup and move it."},
+  {"id":3,"name":"Pick up the scissors","activity":"Picking up scissors","done":"Picked up scissors","objects":["scissors"],"hold":8,"min_move":0.03,"speak":"Pick up the scissors and move them."},
+  {"id":4,"name":"Pick up the phone","activity":"Picking up phone","done":"Picked up phone","objects":["cell phone"],"hold":8,"min_move":0.03,"speak":"Pick up the phone and move it."},
+  {"id":5,"name":"Pick up the book","activity":"Picking up book","done":"Picked up book","objects":["book"],"hold":8,"min_move":0.03,"speak":"Pick up the book and move it."},
+  {"id":6,"name":"Put the cup in the bowl","activity":"Placing cup in bowl","done":"Placed cup in bowl","objects":["cup"],"hold":8,"inside":"bowl","zone_msg":"the cup is not inside the bowl","speak":"Put the cup in the bowl."}
+ ]
+}

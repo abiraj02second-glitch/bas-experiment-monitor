@@ -1,0 +1,9 @@
+experiment_log.json
+recordings/
+uploads/
+__pycache__/
+*.py[cod]
+model_metrics.json
+best.pt
+yolo*.pt
+hand_landmarker.task

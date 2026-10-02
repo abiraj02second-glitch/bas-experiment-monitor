@@ -1,0 +1,16 @@
+services:
+  bas-monitor:
+    build:
+      context: .
+    container_name: bas-ai-monitor
+    ports:
+      - "8000:3000"
+    environment:
+      PORT: "3000"
+      CONF: "0.25"
+      IMGSZ: "640"
+      CAM: "0"
+    volumes:
+      - ./recordings:/app/recordings
+      - ./uploads:/app/uploads
+    restart: unless-stopped

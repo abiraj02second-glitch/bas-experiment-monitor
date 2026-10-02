@@ -1,0 +1,11 @@
+{
+ "name": "Biological Sample Analysis",
+ "steps": [
+  {"id":1,"name":"Pick up container","activity":"Picking up container","done":"Picked container","objects":["container"],"hold":8,"speak":"Pick up the container."},
+  {"id":2,"name":"Open container","activity":"Opening container","done":"Opened container","objects":["lid"],"hold":8,"outside":"container","zone_msg":"the lid is still on the container","speak":"Open the container."},
+  {"id":3,"name":"Add sample","activity":"Adding sample","done":"Added sample","objects":["pipette"],"hold":10,"min_move":0.05,"speak":"Add the sample with the pipette."},
+  {"id":4,"name":"Mix sample","activity":"Mixing sample","done":"Mixed sample","objects":["sample_vial"],"hold":15,"min_move":0.05,"speak":"Mix the sample."},
+  {"id":5,"name":"Close container","activity":"Closing container","done":"Closed container","objects":["lid"],"hold":8,"inside":"container","zone_msg":"the lid is not closed on the container","speak":"Close the container."},
+  {"id":6,"name":"Place container on payload rack","activity":"Placing container on rack","done":"Placed container on rack","objects":["container"],"hold":8,"inside":"payload_rack","zone_msg":"the container is not on the payload rack","speak":"Place the container on the payload rack."}
+ ]
+}

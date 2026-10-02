@@ -1,0 +1,9 @@
+path: dataset
+train: images/train
+val: images/val
+names:            # create the SAME labels (with underscores) in CVAT; must match "objects" in steps.json
+  0: container
+  1: lid
+  2: pipette
+  3: sample_vial
+  4: payload_rack
